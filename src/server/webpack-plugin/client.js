@@ -17,7 +17,7 @@ export default class VueSSRClientPlugin {
         .map(a => a.name))
 
       const initialFiles = uniq(Object.keys(stats.entrypoints)
-        .map(name => stats.entrypoints[name].assets)
+        .map(function (name) { return stats.entrypoints[name].assets.map(file => file.name); })
         .reduce((assets, all) => all.concat(assets), [])
         .filter((file) => isJS(file) || isCSS(file)))
 
@@ -43,7 +43,7 @@ export default class VueSSRClientPlugin {
           if (!chunk || !chunk.files) {
             return
           }
-          const id = m.identifier.replace(/\s\w+$/, '') // remove appended hash
+          const id = m.identifier.replace(/\|\w+$/, '') // remove appended hash
           const files = manifest.modules[hash(id)] = chunk.files.map(fileToIndex)
           // find all asset modules associated with the same chunk
           assetModules.forEach(m => {

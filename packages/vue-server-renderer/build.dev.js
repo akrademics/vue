@@ -8874,7 +8874,7 @@ var TemplateRenderer = function TemplateRenderer (options) {
   this.inject = options.inject !== false;
   // if no template option is provided, the renderer is created
   // as a utility object for rendering assets like preload links and scripts.
-    
+
   var template = options.template;
   this.parsedTemplate = template
     ? typeof template === 'string'
@@ -9067,7 +9067,7 @@ TemplateRenderer.prototype.renderScripts = function renderScripts (context) {
 
         return isJS(file);
       });
-    var needed = [initial[0]].concat(async, initial.slice(1));
+    var needed = [].concat(initial[0] ? [initial[0]] : [], async, initial.slice(1));
     return needed.map(function (ref) {
         var file = ref.file;
 

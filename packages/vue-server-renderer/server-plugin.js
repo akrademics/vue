@@ -17,7 +17,7 @@ var validate = function (compiler) {
     warn('webpack config `target` should be "node".');
   }
 
-  if (compiler.options.output && compiler.options.output.libraryTarget !== 'commonjs2') {
+  if (compiler.options.output && compiler.options.output.library.type !== 'commonjs2') {
     warn('webpack config `output.libraryTarget` should be "commonjs2".');
   }
 
@@ -62,7 +62,7 @@ VueSSRServerPlugin.prototype.apply = function apply (compiler) {
       return cb()
     }
 
-    var entryAssets = entryInfo.assets.filter(isJS);
+    var entryAssets = entryInfo.assets.map(function (file) { return file.name; }).filter(isJS);
 
     if (entryAssets.length > 1) {
       throw new Error(

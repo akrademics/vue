@@ -1,0 +1,93 @@
+diff --git a/node_modules/vue-server-renderer/build.dev.js b/node_modules/vue-server-renderer/build.dev.js
+index fb4caf5..541941d 100644
+--- a/node_modules/vue-server-renderer/build.dev.js
++++ b/node_modules/vue-server-renderer/build.dev.js
+@@ -9060,12 +9060,12 @@ TemplateRenderer.prototype.renderScripts = function renderScripts (context) {
+     var initial = this.preloadFiles.filter(function (ref) {
+         var file = ref.file;
+ 
+-        return isJS(file);
++        return isJS(file) && !file.endsWith('hot-update.js');
+       });
+     var async = (this.getUsedAsyncFiles(context) || []).filter(function (ref) {
+         var file = ref.file;
+-
+-        return isJS(file);
++        // changed line
++        return isJS(file) && !file.endsWith('hot-update.js');
+       });
+     var needed = [initial[0]].concat(async, initial.slice(1));
+     return needed.map(function (ref) {
+diff --git a/node_modules/vue-server-renderer/client-plugin.js b/node_modules/vue-server-renderer/client-plugin.js
+index 15cdcbd..7b091cc 100644
+--- a/node_modules/vue-server-renderer/client-plugin.js
++++ b/node_modules/vue-server-renderer/client-plugin.js
+@@ -45,9 +45,12 @@ VueSSRClientPlugin.prototype.apply = function apply (compiler) {
+       .map(function (a) { return a.name; }));
+ 
+     var initialFiles = uniq(Object.keys(stats.entrypoints)
+-      .map(function (name) { return stats.entrypoints[name].assets; })
++      // changed line
++      .map(function (name) { return stats.entrypoints[name].assets.map(file => file.name); })
+       .reduce(function (assets, all) { return all.concat(assets); }, [])
+-      .filter(function (file) { return isJS(file) || isCSS(file); }));
++      .filter(function (file) {
++         return isJS(file) || isCSS(file);
++      }));
+ 
+     var asyncFiles = allFiles
+       .filter(function (file) { return isJS(file) || isCSS(file); })
+@@ -71,7 +74,9 @@ VueSSRClientPlugin.prototype.apply = function apply (compiler) {
+         if (!chunk || !chunk.files) {
+           return
+         }
+-        var id = m.identifier.replace(/\s\w+$/, ''); // remove appended hash
++
++        // changed line
++        var id = m.identifier.replace(/\|\w+$/, ''); // remove appended hash
+         var files = manifest.modules[hash(id)] = chunk.files.map(fileToIndex);
+         // find all asset modules associated with the same chunk
+         assetModules.forEach(function (m) {
+diff --git a/node_modules/vue-server-renderer/server-plugin.js b/node_modules/vue-server-renderer/server-plugin.js
+index 54ba2b3..121bdc4 100644
+--- a/node_modules/vue-server-renderer/server-plugin.js
++++ b/node_modules/vue-server-renderer/server-plugin.js
+@@ -17,7 +17,8 @@ var validate = function (compiler) {
+     warn('webpack config `target` should be "node".');
+   }
+ 
+-  if (compiler.options.output && compiler.options.output.libraryTarget !== 'commonjs2') {
++  // changed line
++  if (compiler.options.output && compiler.options.output.library.type !== 'commonjs2') {
+     warn('webpack config `output.libraryTarget` should be "commonjs2".');
+   }
+ 
+@@ -62,7 +63,8 @@ VueSSRServerPlugin.prototype.apply = function apply (compiler) {
+       return cb()
+     }
+ 
+-    var entryAssets = entryInfo.assets.filter(isJS);
++    // changed line
++    var entryAssets = entryInfo.assets.filter(file => isJS(file.name));
+ 
+     if (entryAssets.length > 1) {
+       throw new Error(
+@@ -72,14 +74,16 @@ VueSSRServerPlugin.prototype.apply = function apply (compiler) {
+     }
+ 
+     var entry = entryAssets[0];
+-    if (!entry || typeof entry !== 'string') {
++    // changed line
++    if (!entry || typeof entry.name !== 'string') {
+       throw new Error(
+         ("Entry \"" + entryName + "\" not found. Did you specify the correct entry option?")
+       )
+     }
+ 
+     var bundle = {
+-      entry: entry,
++      // changed line
++      entry: entry.name,
+       files: {},
+       maps: {}
+     };

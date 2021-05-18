@@ -45,7 +45,7 @@ VueSSRClientPlugin.prototype.apply = function apply (compiler) {
       .map(function (a) { return a.name; }));
 
     var initialFiles = uniq(Object.keys(stats.entrypoints)
-      .map(function (name) { return stats.entrypoints[name].assets; })
+      .map(function (name) { return stats.entrypoints[name].assets.map(function (file) { return file.name; }); })
       .reduce(function (assets, all) { return all.concat(assets); }, [])
       .filter(function (file) { return isJS(file) || isCSS(file); }));
 
@@ -71,7 +71,7 @@ VueSSRClientPlugin.prototype.apply = function apply (compiler) {
         if (!chunk || !chunk.files) {
           return
         }
-        var id = m.identifier.replace(/\s\w+$/, ''); // remove appended hash
+        var id = m.identifier.replace(/\|\w+$/, ''); // remove appended hash
         var files = manifest.modules[hash(id)] = chunk.files.map(fileToIndex);
         // find all asset modules associated with the same chunk
         assetModules.forEach(function (m) {
